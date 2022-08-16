@@ -1,0 +1,8 @@
+
+
+select CIVIL.MAC_DESCRIPCION
+from documentos_ubb.dbo.modulo_atiende_civil as CIVIL with (nolock)
+where 	CIVIL.MOD_CODIGO = :MOD_CODIGO
+AND 	CIVIL.OFRE_CODIGO	=:OFRE_CODIGO
+AND 	CIVIL.REP_CODIGO	=:REP_CODIGO
+AND 	CIVIL.EDU_CODIGO	=:EDU_CODIGO

@@ -1,0 +1,22 @@
+select 	ltrim(rtrim(categoria.CATE_NOMBRE))			as CATE_NOMBRE
+,			ltrim(rtrim(categoria.CATE_ABREVIACION))		as CATE_ABREVIACION
+,			categoria.CATE_CODIGO							as CATE_CODIGO
+,			categoria.CATE_FECHA_REGISTRO 				as CATE_FECHA_REGISTRO
+,			categoria.cate_fecha_termino 						as cate_fecha_termino
+,			categoria.CATE_FECHA_INICIO 					as CATE_FECHA_INICIO
+,			ltrim(rtrim(categoria.CATE_LOG_REGISTRO))	as CATE_LOG_REGISTRO
+,			ubica = 0
+, 			ind = 0
+from documentos_ubb.DBO.CATEGORIA_SERVICIO		as categoria 	with(nolock)
+join documentos_ubb.dbo.oficina_reparticion				as oficina 		with(nolock)
+on 		categoria.OFRE_CODIGO 	= oficina.OFRE_CODIGO
+and		categoria.CCO_CODIGO 	= oficina.CCO_CODIGO
+and		categoria.REP_CODIGO 		= oficina.REP_CODIGO
+and		categoria.EDU_CODIGO 		= oficina.EDU_CODIGO
+where 	categoria.OFRE_CODIGO	= :OFRE_CODIGO
+and		categoria.CCO_CODIGO		= :CCO_CODIGO
+and		categoria.REP_CODIGO		= :REP_CODIGO
+and		categoria.EDU_CODIGO		= :EDU_CODIGO
+and 		(categoria.CATE_FECHA_TERMINO >= CONVERT(DATETIME,GETDATE()) OR categoria.CATE_FECHA_TERMINO IS NULL)
+
+order by categoria.cate_fecha_termino asc

@@ -1,0 +1,91 @@
+select		motivo.moat_fecha_registro	
+,			motivo.MOAT_FECHA
+,			motivo.moat_numero
+,			motivo.MOAT_CODIGO
+,			fila.FILA_CODIGO
+,			motivo.serv_codigo
+,			motivo.cate_codigo
+,			servicios.serv_nombre
+,			servicios.serv_abreviacion
+,			fila.FILA_NOMBRE
+,			fila.FILA_APELLIDO_PATERNO
+,			fila.FILA_APELLIDO_MATERNO
+,			fila.fila_fecha
+,			fila.fila_rut
+,			fila.fila_dv
+
+--Tabla MOTIVO_ATENCION
+from documentos_ubb.dbo.MOTIVO_ATENCION as motivo with(nolock)
+
+-- Tabla FILAS_ATENCION
+join documentos_ubb.dbo.FILAS_ATENCION as fila with(nolock)
+on 		motivo.FILA_FECHA = fila.FILA_FECHA
+and 	motivo.FILA_CODIGO = fila.FILA_CODIGO
+and 	motivo.OFRE_CODIGO = fila.OFRE_CODIGO
+and 	motivo.CCO_CODIGO = fila.CCO_CODIGO
+and 	motivo.REP_CODIGO = fila.REP_CODIGO
+and 	motivo.EDU_CODIGO = fila.EDU_CODIGO
+and    	fila.FILA_FECHA = CONVERT(DATE,GETDATE())
+
+-- Tabla SERVICIOS_REPARTICION
+join documentos_ubb.dbo.SERVICIOS_REPARTICION as servicios with(nolock)
+on		motivo.SERV_CODIGO = servicios.SERV_CODIGO
+and		motivo.CATE_CODIGO = servicios.CATE_CODIGO
+and		motivo.OFRE_CODIGO = servicios.OFRE_CODIGO
+and		motivo.CCO_CODIGO = servicios.CCO_CODIGO
+and		motivo.REP_CODIGO = servicios.REP_CODIGO
+and		motivo.EDU_CODIGO = servicios.EDU_CODIGO
+and		(servicios.SERV_FECHA_TERMINO >= CONVERT(DATETIME,GETDATE()) OR servicios.SERV_FECHA_TERMINO IS NULL)
+
+-- Tabla atencion_asignada
+join documentos_ubb.dbo.atencion_asignada as atencion_asignada with(nolock)
+on 		atencion_asignada.MOAT_FECHA 	= motivo.MOAT_FECHA
+and		atencion_asignada.FILA_FECHA 	= motivo.FILA_FECHA
+and		atencion_asignada.FILA_CODIGO 	= motivo.FILA_CODIGO
+and		atencion_asignada.MOAT_CODIGO 	= motivo.MOAT_CODIGO
+and		atencion_asignada.OFRE_CODIGO 	= motivo.OFRE_CODIGO
+and		atencion_asignada.CCO_CODIGO 	= motivo.CCO_CODIGO
+and		atencion_asignada.REP_CODIGO 	= motivo.REP_CODIGO
+and		atencion_asignada.EDU_CODIGO 	= motivo.EDU_CODIGO
+
+-- Tabla MODULOS_ASIGNADOS
+
+join documentos_ubb.dbo.MODULOS_ASIGNADOS as asignados with(nolock)
+on		asignados.MODU_CODIGO 	= atencion_asignada.MODU_CODIGO
+and		asignados.MOD_CODIGO 	= atencion_asignada.MOD_CODIGO
+and		asignados.USOF_CODIGO 	= atencion_asignada.USOF_CODIGO
+and		asignados.OFRE_CODIGO 	= atencion_asignada.OFRE_CODIGO
+and		asignados.CCO_CODIGO 	= atencion_asignada.CCO_CODIGO
+and		asignados.REP_CODIGO 	= atencion_asignada.REP_CODIGO
+and		asignados.EDU_CODIGO 	= atencion_asignada.EDU_CODIGO
+and		(asignados.MODU_FECHA_TERMINO >= CONVERT(DATETIME,GETDATE()) OR asignados.MODU_FECHA_TERMINO IS NULL)
+
+-- Tabla MODULOS_ATENCION
+
+join documentos_ubb.dbo.MODULOS_ATENCION as modulos with(nolock)
+on		modulos.MOD_CODIGO 	= asignados.MOD_CODIGO
+and		modulos.OFRE_CODIGO = asignados.OFRE_CODIGO
+and		modulos.CCO_CODIGO 	= asignados.CCO_CODIGO
+and		modulos.REP_CODIGO 	= asignados.REP_CODIGO
+and		modulos.EDU_CODIGO 	= asignados.EDU_CODIGO
+and		(modulos.MOD_FECHA_TERMINO >= CONVERT(DATETIME,GETDATE()) OR modulos.MOD_FECHA_TERMINO IS NULL)
+
+--Tabla USUARIOS_OFICINA
+
+join documentos_ubb.dbo.USUARIOS_OFICINA as usuarios with(nolock)
+on 		usuarios.USOF_CODIGO 	= asignados.USOF_CODIGO
+and		usuarios.OFRE_CODIGO 	= asignados.OFRE_CODIGO
+and		usuarios.CCO_CODIGO 	= asignados.CCO_CODIGO
+and		usuarios.REP_CODIGO 	= asignados.REP_CODIGO
+and		usuarios.EDU_CODIGO 	= asignados.EDU_CODIGO
+and		(usuarios.USOF_FECHA_TERMINO >= CONVERT(DATETIME,GETDATE()) OR usuarios.USOF_FECHA_TERMINO IS NULL)
+
+where	motivo.MOAT_FECHA = CONVERT(DATE,GETDATE())
+and		modulos.MOD_CODIGO  =:MOD_CODIGO
+and		modulos.OFRE_CODIGO =:OFRE_CODIGO
+and		modulos.CCO_CODIGO 	=:CCO_CODIGO
+and		modulos.REP_CODIGO 	=:REP_CODIGO
+and		modulos.EDU_CODIGO 	=:EDU_CODIGO
+and		motivo.estad_codigo = 5
+and		atencion_asignada.estad_codigo = 5
+order by motivo.MOAT_FECHA_REGISTRO
