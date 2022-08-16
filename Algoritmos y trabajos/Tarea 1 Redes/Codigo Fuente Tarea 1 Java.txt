@@ -1,0 +1,399 @@
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
+import javax.swing.JFrame;
+
+public class Tarea1Redes {
+
+    public static void main(String[] args) throws Exception {
+        String sentence; 
+        String echoSentence;
+        //Inicio de conexion con el servidor indicado en la tarea.
+        BufferedReader inFromUser = new BufferedReader(new InputStreamReader(System.in)); 
+        //Se inicia sesion en la IP:146.83.198.59 puerto: 1024
+        Socket clientSocket = new Socket("146.83.198.59", 1024);
+        PrintWriter outToServer = new PrintWriter(clientSocket.getOutputStream(), true); 
+	BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream())); 
+        
+        //Se inicializa el constructor de ventana pasandole las variables inFromUser,clientSocket,outToServer,inFromServer
+        VentanaMenuInicial nueva = new VentanaMenuInicial(inFromUser,clientSocket,outToServer,inFromServer);           
+        nueva.setVisible(true);
+        nueva.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    }
+}
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.Socket;
+import javax.swing.JFrame;
+
+public class VentanaMenuInicial extends JFrame 
+{
+    
+    public PanelMenuInicial panel;
+    //Constructor: Recibira a las variables del protocolo anteriormente definicas en el main
+    public VentanaMenuInicial(BufferedReader inFromUser,Socket socket,PrintWriter outToServer,BufferedReader inFromServer) throws IOException
+    {
+        // llamada del panel, al cual se le adjuntan estas variables para "mantener el inicio de sesion"
+        panel= new PanelMenuInicial(this,inFromUser,socket,outToServer,inFromServer);
+        
+        this.getContentPane().add(panel);
+        this.setSize(panel.getSize());
+        this.setResizable(false);
+    }
+}
+
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.event.ActionEvent;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.JOptionPane;
+
+
+public final class PanelMenuInicial extends JPanel{
+    public JFrame ventana_principal;
+    public Graphics graficoBuffer;
+    public JLabel presentacion, nombre_de_usuario;
+    public JTextField usuario;
+    public JButton iniciar_sesion,salir;
+                    
+    private JLabel ContMensaje;
+    private JLabel dejarMensaje;
+    private JButton enviarMensaje;
+    private JButton lastUserButton;
+    private JTextField lastUserField;
+    private JLabel lastUserLabel;
+    private JLabel mensajeField;
+    private JTextField mensajeText;
+    private JLabel obtenerMensaje;
+    private JButton obtenerMensajeBoton;
+    private JTextField obtenerMensajeTexto;
+    private JTextField setUser;
+    private JTextField setUserMsge;
+    private JTextField lastUser1;
+    
+    public boolean validarLogIn = false;
+
+    BufferedReader inFromUser;
+    Socket socket;
+    PrintWriter outToServer;
+    BufferedReader inFromServer;
+    String echoSentence;
+    //Constructor: Recibira como parametros la ventana principal, junto a las variables del protocolo anteriormente definicas en el main
+    public PanelMenuInicial(JFrame ventana_principal,BufferedReader inFromUser,Socket socket,PrintWriter outToServer,BufferedReader inFromServer) throws IOException
+    {
+        
+        this.ventana_principal= ventana_principal;
+        this.setLayout(null);
+        this.setSize(1024,768);
+        
+        //Se traspasan los datos de la conexion a nuevas variables para asi mantener y manipular los datos a enviar y recibir 
+        this.inFromUser = inFromUser;
+        this.socket= socket;
+        this.outToServer = outToServer;
+        this.inFromServer= inFromServer;
+        
+        NombreDeUsuario();
+    }
+    
+    //aqui estan distribuidos los elementos a poner en pantalla
+    public void NombreDeUsuario()
+    { 
+        presentacion= new JLabel("Hola");
+        presentacion.setFont(new Font("Times New Roman",Font.BOLD,25));
+        presentacion.setForeground(Color.orange);
+        presentacion.setBounds(1,1,200,50);
+        
+        nombre_de_usuario= new JLabel("Ingrese nuevo usuario:");
+        nombre_de_usuario.setFont(new Font("Times New Roman",Font.BOLD,25));
+        nombre_de_usuario.setForeground(Color.orange);
+        nombre_de_usuario.setBounds(1,40,250,25);
+        
+        usuario = new JTextField();
+        usuario.setBounds(251,40,200,25);
+        
+        iniciar_sesion= new JButton("Iniciar sesion");
+        iniciar_sesion.setBounds(50,100,310,40);
+        iniciar_sesion.setOpaque(false);
+        iniciar_sesion.setFont(new Font("Times New Roman",Font.BOLD,20));
+        iniciar_sesion.setBackground(Color.BLACK);
+        iniciar_sesion.setForeground(Color.ORANGE);
+        iniciar_sesion.setHorizontalTextPosition(JButton.CENTER);
+        iniciar_sesion.setVerticalTextPosition(JButton.CENTER);
+        iniciar_sesion.addActionListener(this::pulsarBotonIniciarSesion);
+        
+        salir= new JButton("SALIR");
+        salir.setBounds(690,690,310,40);
+        salir.setOpaque(false);
+        salir.setFont(new Font("Times New Roman",Font.BOLD,20));
+        salir.setBackground(Color.BLACK);
+        salir.setForeground(Color.ORANGE);
+        salir.setHorizontalTextPosition(JButton.CENTER);
+        salir.setVerticalTextPosition(JButton.CENTER);
+        salir.addActionListener(this::pulsarBotonSalir);
+        
+        
+        add(usuario);
+        add(iniciar_sesion);
+        add(salir);
+        add(presentacion);
+        add(nombre_de_usuario);
+    }
+    
+    //Aqui estan distribuidos mas elemento s a poner en pantalla.
+    @SuppressWarnings("unchecked")
+    private void ventanaSiguiente() {
+
+        dejarMensaje = new JLabel();
+        ContMensaje = new JLabel();
+        obtenerMensaje = new JLabel();
+        mensajeField = new JLabel();
+        lastUserLabel = new JLabel();
+        
+        setUser = new JTextField();
+        setUserMsge = new JTextField();
+        lastUser1 = new javax.swing.JTextField();
+        
+        obtenerMensajeTexto = new JTextField();
+        
+        mensajeText = new JTextField();
+        lastUserField = new JTextField();
+        
+        enviarMensaje = new JButton();
+        enviarMensaje.setText("Enviar mensaje.");
+        enviarMensaje.addActionListener(this::enviarMensaje);
+        
+        obtenerMensajeBoton = new JButton();
+        obtenerMensajeBoton.setText("Obtener Mensaje.");
+        obtenerMensajeBoton.addActionListener(this::obtenerMensaje);
+        
+        lastUserButton = new JButton();
+        lastUserButton.setText("Obtener.");
+        lastUserButton.addActionListener(this::obtenerUltimoUsuario);
+        
+        dejarMensaje.setText("Dejar Mensaje a usuario:");
+        ContMensaje.setText("Contenido del mensaje:");
+        obtenerMensaje.setText("Obtener Mensaje de usuario:");
+        mensajeField.setText("Mensaje:");
+        lastUserLabel.setText("Obtener datos de usuario conectado:");
+        
+        
+        //Comandos para posicionamiento de objetos en el panel
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(enviarMensaje)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                    .addComponent(ContMensaje, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(dejarMensaje, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(setUser, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(setUserMsge, javax.swing.GroupLayout.PREFERRED_SIZE, 548, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(obtenerMensaje)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(obtenerMensajeTexto, javax.swing.GroupLayout.PREFERRED_SIZE, 223, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(obtenerMensajeBoton))
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(mensajeField)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(mensajeText)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lastUserLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(lastUser1, javax.swing.GroupLayout.DEFAULT_SIZE, 166, Short.MAX_VALUE)
+                            .addComponent(lastUserField))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(lastUserButton)))
+                .addContainerGap(69, Short.MAX_VALUE))
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(dejarMensaje)
+                    .addComponent(setUser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(ContMensaje)
+                    .addComponent(setUserMsge, javax.swing.GroupLayout.PREFERRED_SIZE, 98, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(enviarMensaje)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(obtenerMensaje)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(obtenerMensajeTexto, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(obtenerMensajeBoton)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(mensajeField)
+                    .addComponent(mensajeText, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(15, 15, 15)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lastUserLabel)
+                    .addComponent(lastUserField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lastUserButton))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lastUser1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(43, Short.MAX_VALUE))
+        );
+    }
+    
+    //Aqui en los listener se comienza a dar vida al programa con las acciones que realizara.
+    public void pulsarBotonIniciarSesion(ActionEvent e)
+    {   
+        //Verificar servira para no tener campos vacios o nulos dentro de los cuadros de texto.
+        String verificar= usuario.getText();
+        verificar= verificar.replaceAll(" ","");
+        if(verificar.isEmpty())
+        {
+            //en caso de error se alertara al usuario
+            JOptionPane.showMessageDialog(null, "Debes ingresar un usuario");
+        }
+        else
+        {
+            //Esta seccion corresponde al punto 1 del protocolo NEW_USER
+            outToServer.println("NEW_USER "+usuario.getText());
+            try {
+                echoSentence = inFromServer.readLine();
+            } catch (IOException ex) {
+                Logger.getLogger(PanelMenuInicial.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            System.out.println("DEL SERVIDOR: " + echoSentence);
+
+            iniciar_sesion.setVisible(false);
+            usuario.setVisible(false);
+            presentacion.setVisible(false);
+            nombre_de_usuario.setVisible(false);
+            ventanaSiguiente();
+            validarLogIn =true;
+            JOptionPane.showMessageDialog(null, "Usuario iniciado como: "+usuario.getText());
+        }
+        }
+    
+    
+    public void enviarMensaje(ActionEvent e) 
+    {
+        //Verificar servira para no tener campos vacios o nulos dentro de los cuadros de texto.
+        String verificar= setUser.getText();
+        verificar= verificar.replaceAll(" ","");
+        
+        String verificar1= setUserMsge.getText();
+        verificar1= verificar1.replaceAll(" ","");
+        if(verificar.isEmpty() || verificar1.isEmpty())
+        {
+            //en caso de error se alertara al usuario
+            JOptionPane.showMessageDialog(null, "Debes ingresar un usuario o un mensaje");
+        }
+        else
+        {
+            //Esta seccion corresponde al punto 2 del protocolo SET <usuario> <mensaje>
+            outToServer.println("SET "+setUser.getText()+" "+setUserMsge.getText());
+            try { 
+                echoSentence = inFromServer.readLine();
+            } catch (IOException ex) {
+                Logger.getLogger(PanelMenuInicial.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            System.out.println("DEL SERVIDOR: " + echoSentence);
+        }
+    }                                             
+    public void obtenerMensaje(ActionEvent e) 
+    {
+        //Verificar servira para no tener campos vacios o nulos dentro de los cuadros de texto.
+        String verificar= obtenerMensajeTexto.getText();
+        verificar= verificar.replaceAll(" ","");
+        if(verificar.isEmpty())
+        {
+            //en caso de error se alertara al usuario
+            JOptionPane.showMessageDialog(null, "Debes ingresar un nombre de usuario!");
+        }
+        else
+        {
+            //Esta seccion corresponde al punto 3 del protocolo SET <usuario>
+            outToServer.println("GET "+obtenerMensajeTexto.getText());
+            try { 
+                echoSentence = inFromServer.readLine();
+            } catch (IOException ex) {
+                Logger.getLogger(PanelMenuInicial.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            //El mensaje sera mostrado en un cuadro de texto inserto en el programa
+                mensajeText.setText(echoSentence);
+                System.out.println("DEL SERVIDOR: " + echoSentence);
+        }
+    } 
+    public void obtenerUltimoUsuario(ActionEvent e) 
+    {
+        //Verificar servira para no tener campos vacios o nulos dentro de los cuadros de texto.
+        String verificar= lastUserField.getText();
+        verificar= verificar.replaceAll(" ","");
+        if(verificar.isEmpty())
+        {
+            //en caso de error se alertara al usuario
+            JOptionPane.showMessageDialog(null, "Debes ingresar un nombre de usuario!");
+        }
+        else
+        {
+            //Esta seccion corresponde al punto 4 del protocolo LAST <usuario>
+            outToServer.println("LAST "+lastUserField.getText());
+            try { 
+                echoSentence = inFromServer.readLine();
+            } catch (IOException ex) {
+                Logger.getLogger(PanelMenuInicial.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            lastUser1.setText(echoSentence);
+            System.out.println("DEL SERVIDOR: " + echoSentence);
+        }
+    }
+    
+    
+    
+    
+    
+    public void pulsarBotonSalir(ActionEvent e)
+    {
+        //Verificar servira para no tener campos vacios o nulos dentro de los cuadros de texto.
+        if(validarLogIn==false)
+        {
+            //en caso de error se alertara al usuario
+            JOptionPane.showMessageDialog(null, "Debes ingresar un nombre de usuario primero!");
+        }
+        else
+        {
+            //Esta seccion corresponde al punto 5 del protocolo FIN donde se indicara el cierre de sesion al servidor
+            outToServer.println("FIN");
+            try {
+                echoSentence = inFromServer.readLine();
+                System.out.println("DEL SERVIDOR: " + echoSentence);
+                socket.close();
+            } catch (IOException ex) {
+                Logger.getLogger(PanelMenuInicial.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            System.exit(0);
+        }
+    }  
+}
